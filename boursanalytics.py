@@ -6,24 +6,29 @@ import shlex
 
 from commands.getprice import get_price
 from commands.analyse import analyse
+from commands.portfolio import initialize_portfolio, show_portfolio
+from commands.addmoney import add_money
+from commands.invest import invest
+from commands.sell import sell
 
 def show_banner():
     """Displays the ASCII art and information."""
     BLUE = '\033[94m'
     RESET = '\033[0m'
 
-    banner = BLUE + """
- ____                          _                _       _   _          
-| __ )  ___  _   _ _ __ ___   / \\   _ __   __ _| |_   _| |_(_) ___ ___ 
-|  _ \\ / _ \\| | | | '__/ __| / _ \\ | '_ \\ / _ | | | | | __| |/ __/ __|
-| |_) | (_) | |_| | |  \\__ \\/ ___ \\| | | | (_| | | |_| | |_| | (__\\__ \\
-|____/ \\___/ \\__,_|_|  |___/_/   \\_\\_| |_|\\__,_|_|\\__, |\\__|_|\\___|___/
-                                                  |___/                
+    banner = BLUE + r"""
+██████╗  ██████╗ ██╗   ██╗██████╗ ███████╗ █████╗ ███╗   ██╗ █████╗ ██╗  ██╗   ██╗████████╗██╗ ██████╗███████╗
+██╔══██╗██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔══██╗████╗  ██║██╔══██╗██║  ╚██╗ ██╔╝╚══██╔══╝██║██╔════╝██╔════╝
+██████╔╝██║   ██║██║   ██║██████╔╝███████╗███████║██╔██╗ ██║███████║██║   ╚████╔╝    ██║   ██║██║     ███████╗
+██╔══██╗██║   ██║██║   ██║██╔══██╗╚════██║██╔══██║██║╚██╗██║██╔══██║██║    ╚██╔╝     ██║   ██║██║     ╚════██║
+██████╔╝╚██████╔╝╚██████╔╝██║  ██║███████║██║  ██║██║ ╚████║██║  ██║███████╗██║      ██║   ██║╚██████╗███████║
+╚═════╝  ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═╝      ╚═╝   ╚═╝ ╚═════╝╚══════╝
+
     """ + RESET
 
     info_text = """
     Welcome to BoursAnalytics!
-    This program helps you track stock prices.
+    This program helps you track stock prices, analyze trends, and manage a virtual portfolio.
     Type 'getprice' followed by the stock symbol to get started.
     Example: getprice AAPL
     """
@@ -40,6 +45,7 @@ def update_prompt():
 def main():
     os.system('clear')  # Clear screen when starting the application
     show_banner()
+    initialize_portfolio()
 
     # Enable command history and configure readline
     readline.set_auto_history(True)  # Automatically adds commands to history
@@ -64,35 +70,57 @@ def main():
             if command == "getprice":
                 if len(args) > 1:
                     stock_symbol = args[1]
-                    get_price(stock_symbol)  # Appel de la fonction avec le symbole de la crypto-monnaie
+                    get_price(stock_symbol)  # Call get_price function with the stock symbol
                 else:
                     print("Usage: getprice <stock_symbol>")
             elif command == "help":
                 show_banner()  # Re-display the banner as help message
             
             elif command == "analyse":
-                if len(args) > 1:
-                    # Extraction des options -s et -t
-                    symbol = None
-                    time_period = 30  # Valeur par défaut, par exemple 30 jours
-
-                    for arg in args[1:]:
-                        if arg.startswith('-s'):
-                            symbol = arg[2:].upper()  # Extraire le symbole après -s
-                        elif arg.startswith('-t'):
-                            try:
-                                time_period = int(arg[2:])  # Extraire le nombre de jours après -t
-                            except ValueError:
-                                print("Invalid time period. Please enter a number.")
-                                continue
-                    
-                    if symbol:
-                        analyse(symbol, time_period)
-                    else:
-                        print("Usage: analyse -s[symbol] -t[time in days]")
+                if len(args) > 4 and args[1] == "-s" and args[3] == "-t":
+                    symbol = args[2]
+                    try:
+                        days = int(args[4])
+                        analyse(symbol, days)  # Call analyse function with the parameters
+                    except ValueError:
+                        print("Invalid time period. Please enter a number.")
                 else:
-                    print("Usage: analyse -s[symbol] -t[time in days]")
-                    
+                    print("Usage: analyse -s <symbol> -t <time_in_days>")
+            elif command == "addmoney":
+                if len(args) > 1:
+                    try:
+                        amount = float(args[1])
+                        add_money(amount)  # Add money to the portfolio
+                    except ValueError:
+                        print("Invalid amount. Please enter a number.")
+                else:
+                    print("Usage: addmoney <amount>")
+            elif command == "portfolio":
+                show_portfolio()  # Show current portfolio
+            elif command == "sell":
+                if len(args) > 4 and args[1] == "-s" and args[3] == "-a":
+                    symbol = args[2]
+                    amount = args[4]
+                    if amount == "*":
+                        sell(symbol, "*")  # Sell all units of the specified cryptocurrency
+                    else:
+                        try:
+                            amount = float(amount)
+                            sell(symbol, amount)  # Sell the specified amount of the cryptocurrency
+                        except ValueError:
+                            print("Invalid amount. Please enter a number or '*' to sell all.")
+                else:
+                    print("Usage: sell -s <symbol> -a <amount>")
+            elif command == "invest":
+                if len(args) > 4 and args[1] == "-s" and args[3] == "-a":
+                    symbol = args[2]
+                    try:
+                        amount = float(args[4])
+                        invest(symbol, amount)  # Invest in a cryptocurrency
+                    except ValueError:
+                        print("Invalid amount. Please enter a number.")
+                else:
+                    print("Usage: invest -s <symbol> -a <amount>")
             elif command == "exit":
                 print("Goodbye!")
                 break

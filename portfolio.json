@@ -1,0 +1,36 @@
+{
+    "balance": 1499.9606432967857,
+    "transactions": [
+        {
+            "type": "add_money",
+            "amount": 500.0,
+            "date": "2024-09-21 22:27:43",
+            "new_balance": 1500.0
+        },
+        {
+            "type": "buy",
+            "symbol": "btceur",
+            "amount": 100.0,
+            "units": 0.001764874583599903,
+            "price_per_unit": 56661.25,
+            "date": "2024-09-21 22:28:20"
+        },
+        {
+            "type": "buy",
+            "symbol": "btceur",
+            "amount": 100.0,
+            "units": 0.0017655694535297706,
+            "price_per_unit": 56638.95,
+            "date": "2024-09-21 22:34:15"
+        },
+        {
+            "type": "sell",
+            "symbol": "btceur",
+            "units_sold": 0.0035304440371296737,
+            "price_per_unit": 56638.95,
+            "total_received": 199.96064329678572,
+            "date": "2024-09-21 22:35:47"
+        }
+    ],
+    "investments": {}
+}

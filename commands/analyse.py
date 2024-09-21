@@ -1,52 +1,72 @@
 # analyse.py
 import requests
+import pandas as pd
 from datetime import datetime, timedelta
 
 def analyse(symbol, days):
     """
-    Analyze the cryptocurrency data over the given number of days.
-
+    Analyse the price of a cryptocurrency over a specified period.
+    
     Args:
-        symbol (str): The symbol of the cryptocurrency (e.g., 'BTCUSDT' for Bitcoin).
-        days (int): The number of days for the analysis.
+        symbol (str): The symbol of the cryptocurrency (e.g., 'BTCUSDT').
+        days (int): The number of days to look back for analysis.
     """
-    # Calculer la date de début pour récupérer les données historiques
-    end_time = datetime.utcnow()
-    start_time = end_time - timedelta(days=days)
-
-    # Convertir les dates en millisecondes pour l'API de Binance
-    end_time_ms = int(end_time.timestamp() * 1000)
-    start_time_ms = int(start_time.timestamp() * 1000)
-
-    # URL pour récupérer les données de klines (historique des prix) sur la période donnée
-    url = f"https://api.binance.com/api/v3/klines?symbol={symbol.upper()}&interval=1d&startTime={start_time_ms}&endTime={end_time_ms}"
-
+    # Convert the days into milliseconds for the Binance API
+    end_time = int(datetime.now().timestamp() * 1000)
+    start_time = int((datetime.now() - timedelta(days=days)).timestamp() * 1000)
+    
+    url = f"https://api.binance.com/api/v3/klines?symbol={symbol.upper()}&interval=1d&startTime={start_time}&endTime={end_time}"
+    
     try:
         response = requests.get(url)
         data = response.json()
 
         if not data:
-            print(f"No data available for {symbol.upper()} in the past {days} days.")
+            print(f"No data available for {symbol.upper()} for the last {days} days.")
             return
 
-        # Extraction des prix pour les calculs
-        open_prices = [float(item[1]) for item in data]  # Prix d'ouverture
-        close_prices = [float(item[4]) for item in data]  # Prix de fermeture
-        high_prices = [float(item[2]) for item in data]  # Prix le plus haut
-        low_prices = [float(item[3]) for item in data]  # Prix le plus bas
+        # Extract relevant data (timestamp, open, high, low, close prices)
+        df = pd.DataFrame(data, columns=[
+            'timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 
+            'quote_asset_volume', 'number_of_trades', 'taker_buy_base_asset_volume', 
+            'taker_buy_quote_asset_volume', 'ignore'
+        ])
+        
+        # Convert price columns to float
+        df['close'] = df['close'].astype(float)
+        df['high'] = df['high'].astype(float)
+        df['low'] = df['low'].astype(float)
 
-        # Calculs des statistiques
-        percentage_change = ((close_prices[-1] - open_prices[0]) / open_prices[0]) * 100
-        highest_price = max(high_prices)
-        lowest_price = min(low_prices)
-        average_price = sum(close_prices) / len(close_prices)
+        # Calculate statistics
+        start_price = df['close'].iloc[0]
+        end_price = df['close'].iloc[-1]
+        percentage_change = ((end_price - start_price) / start_price) * 100
+        highest_price = df['high'].max()
+        lowest_price = df['low'].min()
 
-        # Affichage des résultats
-        print(f"Analysis of {symbol.upper()} over the last {days} days:")
-        print(f"Percentage change: {percentage_change:.2f}%")
-        print(f"Highest price: {highest_price:.2f} USD")
-        print(f"Lowest price: {lowest_price:.2f} USD")
-        print(f"Average closing price: {average_price:.2f} USD")
+        # Convert timestamps to readable dates
+        start_date = datetime.fromtimestamp(start_time / 1000).strftime('%Y-%m-%d')
+        end_date = datetime.fromtimestamp(end_time / 1000).strftime('%Y-%m-%d')
+
+        # Define colors
+        BOLD = '\033[1m'
+        RESET = '\033[0m'
+        GREEN = '\033[1;92m'
+        RED = '\033[1;91m'
+
+        # Determine color based on percentage change
+        color = GREEN if percentage_change > 0 else RED
+
+        # Print introduction with dates and symbol
+        print(f"\nAnalyzing {symbol.upper()} from {start_date} to {end_date}:")
+
+        # Display statistics
+        print(f"{BOLD}Evolution: {RESET}{color}{percentage_change:.2f}%{RESET}")
+        print(f"{BOLD}Highest Price:{RESET} {highest_price:.2f}")
+        print(f"{BOLD}Lowest Price:{RESET} {lowest_price:.2f}")
+        print(f"{BOLD}Start Price:{RESET} {start_price:.2f}")
+        print(f"{BOLD}End Price:{RESET} {end_price:.2f}")
+        print("")
 
     except Exception as e:
-        print(f"An error occurred while fetching data: {e}")
+        print(f"An error occurred: {e}")
