@@ -5,6 +5,7 @@ import readline
 import shlex
 
 from commands.getprice import get_price
+from commands.analyse import analyse
 
 def show_banner():
     """Displays the ASCII art and information."""
@@ -68,6 +69,30 @@ def main():
                     print("Usage: getprice <stock_symbol>")
             elif command == "help":
                 show_banner()  # Re-display the banner as help message
+            
+            elif command == "analyse":
+                if len(args) > 1:
+                    # Extraction des options -s et -t
+                    symbol = None
+                    time_period = 30  # Valeur par défaut, par exemple 30 jours
+
+                    for arg in args[1:]:
+                        if arg.startswith('-s'):
+                            symbol = arg[2:].upper()  # Extraire le symbole après -s
+                        elif arg.startswith('-t'):
+                            try:
+                                time_period = int(arg[2:])  # Extraire le nombre de jours après -t
+                            except ValueError:
+                                print("Invalid time period. Please enter a number.")
+                                continue
+                    
+                    if symbol:
+                        analyse(symbol, time_period)
+                    else:
+                        print("Usage: analyse -s[symbol] -t[time in days]")
+                else:
+                    print("Usage: analyse -s[symbol] -t[time in days]")
+                    
             elif command == "exit":
                 print("Goodbye!")
                 break
